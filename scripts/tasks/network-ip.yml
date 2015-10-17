@@ -1,0 +1,40 @@
+---
+- name: Trying to get the IP
+  shell: "ifconfig {{ item }} | awk '{print $2}' | grep -E -o '([0-9]{1,3}[\\.]){3}[0-9]{1,3}'"
+#  delegate_to: localhost
+  ignore_errors: yes
+  register: interface_exist
+  until: interface_exist.rc == 0
+  retries: 1
+  delay: 0
+  with_items:
+    - en0
+    - eth0
+
+- name: Create
+  file:
+    path: _ip.txt
+    state: touch
+
+- name: Save
+  shell: 'echo "{{ item.stdout }}" > _ip.txt'
+  when: item.rc == 0 and item.stdout != ""
+  with_items: interface_exist.results
+#  delegate_to: localhost
+
+- name: Get
+  set_fact:
+    hub: "{{ lookup('file', '_ip.txt') }}"
+
+- name: Remove
+  file:
+    path: _ip.txt
+    state: absent
+#  delegate_to: localhost
+
+- name: Check
+  fail:
+    msg: 1
+  when: hub == ""
+
+- debug: var=hub

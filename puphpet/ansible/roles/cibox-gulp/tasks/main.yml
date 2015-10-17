@@ -1,0 +1,20 @@
+---
+- name: Install Gulp
+  sudo: yes
+  npm:
+    name: "{{ item }}"
+    global: yes
+  with_items:
+    - gulp
+    - bower
+    - gulp-ruby-sass
+    - gulp-autoprefixer
+    - gulp-minify-css
+    - gulp-jshint
+    - gulp-concat
+    - gulp-uglify
+    - gulp-imagemin
+    - gulp-notify
+    - gulp-rename
+    - gulp-cache
+    - del

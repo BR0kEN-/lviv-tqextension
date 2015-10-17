@@ -1,0 +1,6 @@
+---
+scan_security: true
+phpcs_extensions: php,inc,install,module
+build_reports_dir: "{{ docroot }}/build_reports"
+artifacts_file: "{{ sync_root }}/commentinfo.md"
+composer_dir: /usr/share/composer

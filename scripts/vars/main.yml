@@ -1,0 +1,42 @@
+---
+build_id: lvivtq
+sync_root: /var/www
+docroot: "{{ sync_root }}/docroot"
+installation_profile_name: pp
+drupal_tmp_dir: /tmp
+cache_folder: "{{ sync_root }}/cache"
+backup_folder: "{{ sync_root }}/backup"
+site_url: "http://{{ build_id }}.dev"
+# Site url to download assets via stage_file_proxy.
+origin_site_url: http://192.168.56.132.xip.io
+# This variable will be used for variable_get('environment'). Can be overridden by CI server.
+# development = 'default', demo = 'demo', staging = 'stage'.
+pp_environment: default
+# This variable allows select type of installation. Can be overridden by CI server.
+# From installation profile = 'profile', from sql dump = 'sql'.
+workflow_type: profile
+# This variable allows make backup before processing. Can be overridden by CI server.
+# true, false.
+make_backup: False
+# htpasswd protection for securing backups.
+backup_user: propeople
+backup_pass: givemebackup
+is_windows: False
+# APP_ENV=dev - this varible will be set at PR_BUILDER from CI shell executor.
+env_vars:
+  APP_ENV: "{{ pp_environment }}"
+drupal:
+  user: admin
+  pass: propeople
+mysql:
+  user: root
+  pass: root
+databases:
+  default: "{{ build_id }}_drupal"
+# URL to the source database. Can be overridden by CI server.
+source_database: ""
+# Modules that will be enabled after successfull Drupal installation.
+modules_to_enable:
+  - configure
+features_to_revert: []
+csv_files: []

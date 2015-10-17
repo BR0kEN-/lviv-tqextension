@@ -1,0 +1,12 @@
+<?php
+/**
+ * @file
+ * Configuration module.
+ */
+
+/**
+ * Implements hook_init().
+ */
+function configure_init() {
+
+}

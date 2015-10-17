@@ -1,0 +1,74 @@
+<?php
+/**
+ * @file
+ * Configure.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function configure_install() {
+  $vocabulary = (object) [
+    'name' => 'Example',
+    'hierarchy' => 0,
+    'machine_name' => 'example',
+  ];
+
+  taxonomy_vocabulary_save($vocabulary);
+
+  foreach ([
+    1 => [0],
+    2 => [1],
+    3 => [2],
+    4 => [2],
+    5 => [1],
+    6 => [5],
+    7 => [5],
+    8 => [5],
+    9 => [8],
+    10 => [8],
+  ] as $i => $parents) {
+    $term = create_term($vocabulary->name, "Term $i");
+    $term->description = "Description for $i";
+
+    foreach ($parents as $parent) {
+      $parent = create_term('example', "Term $parent")->value();
+
+      if (isset($parent->is_new)) {
+        continue;
+      }
+
+      $term->parent[] = $parent->tid;
+    }
+
+    $term->save();
+  }
+}
+
+/**
+ * Create a term.
+ *
+ * @param string $vocabulary_name
+ *   Taxonomy vocabulary machine name.
+ * @param string $name
+ *   Term human-readable name.
+ *
+ * @return \EntityDrupalWrapper
+ *   Entity wrapper object.
+ */
+function create_term($vocabulary_name, $name) {
+  // Taxonomy vocabulary created via Features.
+  $vocabulary = taxonomy_vocabulary_machine_name_load($vocabulary_name);
+  $term = taxonomy_term_load_multiple([], ['name' => $name, 'vid' => $vocabulary->vid]);
+  $term = reset($term);
+
+  if (empty($term)) {
+    $term = entity_create('taxonomy_term', [
+      'vid' => $vocabulary->vid,
+      'name' => $name,
+      'vocabulary_machine_name' => $vocabulary_name,
+    ]);
+  }
+
+  return entity_metadata_wrapper('taxonomy_term', $term);
+}

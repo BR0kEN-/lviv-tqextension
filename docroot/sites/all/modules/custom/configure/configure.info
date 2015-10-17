@@ -1,0 +1,28 @@
+name = Configure
+package = FFW
+core = 7.x
+
+hidden = TRUE
+
+; Core
+dependencies[] = field_ui
+
+; Contrib
+dependencies[] = admin_menu
+dependencies[] = views_ui
+dependencies[] = page_manager
+dependencies[] = features
+dependencies[] = strongarm
+dependencies[] = entity
+dependencies[] = devel
+dependencies[] = hser
+dependencies[] = cshs
+dependencies[] = shs
+
+; Features
+
+; Configs
+dependencies[] = config
+
+; Content Types
+dependencies[] = content_type_example
