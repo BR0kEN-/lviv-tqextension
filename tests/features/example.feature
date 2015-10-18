@@ -1,6 +1,9 @@
-@api
+@api @d7 @javascript
 Feature: TqExtension examples
-  @javascript
+  @uli
+  Scenario: Drush ULI
+    Given I login with one time link (admin)
+
   Scenario: Hierarchical selects
     Given I login with one time link (admin)
     Then I am on the "node/add/example" page

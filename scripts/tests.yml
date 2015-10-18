@@ -8,53 +8,21 @@
 
   vars:
     browser: firefox
+    kill_selenium: False
 
     selenium:
       source: http://selenium-release.storage.googleapis.com/2.45/selenium-server-standalone-2.45.0.jar
       jar: ~/selenium/selenium.jar
 
   pre_tasks:
-    - name: Check for VBox network
-      shell: ifconfig | grep -Eo '(vboxnet\d+)' | awk 'END{print}' | awk '{print $1}'
-      register: vbox_network
+    - name: Check Selenium process ID
+      shell: "ps aux | grep '{{ selenium.jar | basename }}' | grep -v grep | awk '{print $2}'"
       delegate_to: localhost
+      register: selenium_pid
 
-    - name: Check hub IP
-      shell: ifconfig {{ vbox_network.stdout }} | awk '{print $2}' | grep -E -o '([0-9]{1,3}[\\.]){3}[0-9]{1,3}'
-      delegate_to: localhost
-      register: hub
-      when: vbox_network.stdout
-
-    - fail: No VBox networks exist. Try to execute 'vagrant up'.
-      when: hub is undefined or hub.stdout == "" or hub.rc != 0
-
-    - name: Install Composer packages
-      sudo: yes
-      shell: "cd /var/www && composer install"
-
-    - name: Create directory for Selenium
-      file:
-        mode: 0755
-        path: "{{ selenium.jar | dirname }}"
-        state: directory
-
-    - name: Create local directory for Selenium
-      file:
-        mode: 0755
-        path: "{{ selenium.jar | dirname }}"
-        state: directory
-      delegate_to: localhost
-
-    - name: Download Selenium server
-      get_url:
-        url: "{{ selenium.source }}"
-        dest: "{{ selenium.jar }}"
-
-    - name: Copy Selenium server to local machine
-      synchronize:
-        mode: pull
-        src: "{{ selenium.jar }}"
-        dest: "{{ selenium.jar }}"
+    - name: Register variable with reports URL
+      set_fact:
+        reports_url: "{{ site_url }}/{{ build_reports_dir | basename }}"
 
     - name: Create directory for reports
       sudo: yes
@@ -67,31 +35,12 @@
         - directory
 
   tasks:
-    - name: Register variable with reports URL
-      set_fact:
-        reports_url: "{{ site_url }}/{{ build_reports_dir | basename }}"
-
-    # Run "X virtual framebuffer" for launching UI applications in a background.
-    - name: Ensure that xvfb run
-      sudo: yes
-      shell: "Xvfb :99 -ac -screen 0 1024x768x8 > /tmp/xvfb.log 2>&1 &"
-
-    - name: Run Selenium Hub
-      shell: "java -jar {{ selenium.jar }} -hub -log /tmp/selenium-hub.log &"
-      delegate_to: localhost
-
-    - name: Run Selenium Node
-      shell: "java -jar {{ selenium.jar }} -node -log /tmp/selenium-node.log &"
-
-    - name: Create behat.yml
-      template:
-        src: ../tests/behat.yml.j2
-        dest: ../tests/behat.yml
-      delegate_to: localhost
+    - include: tasks/tests.init.yml
+      when: selenium_pid.stdout == ""
 
     - name: Run tests
       sudo: yes
-      shell: "cd {{ sync_root }}/tests && ../bin/behat {{ except_js | default('') }}"
+      shell: "cd {{ sync_root }}/tests && ../bin/behat {{ behat_vars | default('') }}"
       ignore_errors: yes
 
     - name: Create Behat report
@@ -100,5 +49,6 @@
   post_tasks:
     - name: Kill Selenium Hub
       # All nodes will be killed automatically.
-      shell: kill `ps aux | grep '{{ selenium.jar | basename }}' | grep -v grep | awk '{print $2}'`
+      shell: "kill {{ selenium_pid.stdout }}"
       delegate_to: localhost
+      when: kill_selenium and selenium_pid.stdout != ""

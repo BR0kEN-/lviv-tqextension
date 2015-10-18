@@ -22,6 +22,7 @@ if [ -f ${sudo_script_name} ]; then
 fi
 
 extra_vars=""
+behat_vars=""
 
 for ((i = 2; i <= $#; i++)); do
     # Remove all data after "=" symbol.
@@ -42,12 +43,23 @@ for ((i = 2; i <= $#; i++)); do
         continue
     fi
 
+    for p in tags format; do
+        if [ ${var} == "${p}" ]; then
+            behat_vars+=" --${var}=\\\"${val}\\\""
+            continue 2
+        fi
+    done
+
     if [[ ${val} != {* && ${val: -1} != "}" ]]; then
         val="\"${val}\""
     fi
 
     extra_vars+="\"${var}\":${val},"
 done
+
+if [ -n "${behat_vars}" ]; then
+    extra_vars+="\"behat_vars\":\"${behat_vars}\","
+fi
 
 # Remove last comma.
 extra_vars=${extra_vars%%,}
