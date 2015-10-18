@@ -8,7 +8,6 @@
 
   vars:
     browser: firefox
-    run_javascript_tests: no
 
     selenium:
       source: http://selenium-release.storage.googleapis.com/2.45/selenium-server-standalone-2.45.0.jar
@@ -39,6 +38,13 @@
         path: "{{ selenium.jar | dirname }}"
         state: directory
 
+    - name: Create local directory for Selenium
+      file:
+        mode: 0755
+        path: "{{ selenium.jar | dirname }}"
+        state: directory
+      delegate_to: localhost
+
     - name: Download Selenium server
       get_url:
         url: "{{ selenium.source }}"
@@ -65,26 +71,17 @@
       set_fact:
         reports_url: "{{ site_url }}/{{ build_reports_dir | basename }}"
 
-    - name: Run JS tests
-      set_fact:
-        except_js: "--tags '~@javascript'"
-      when: run_javascript_tests == "no"
-
     # Run "X virtual framebuffer" for launching UI applications in a background.
     - name: Ensure that xvfb run
       sudo: yes
       shell: "Xvfb :99 -ac -screen 0 1024x768x8 > /tmp/xvfb.log 2>&1 &"
-      when: run_javascript_tests == "yes"
-      when: group_names[0] != "vagrant"
 
     - name: Run Selenium Hub
       shell: "java -jar {{ selenium.jar }} -hub -log /tmp/selenium-hub.log &"
-      when: run_javascript_tests == "yes"
       delegate_to: localhost
 
     - name: Run Selenium Node
       shell: "java -jar {{ selenium.jar }} -node -log /tmp/selenium-node.log &"
-      when: run_javascript_tests == "yes"
 
     - name: Create behat.yml
       template:
@@ -104,5 +101,4 @@
     - name: Kill Selenium Hub
       # All nodes will be killed automatically.
       shell: kill `ps aux | grep '{{ selenium.jar | basename }}' | grep -v grep | awk '{print $2}'`
-      when: run_javascript_tests == "yes"
       delegate_to: localhost
