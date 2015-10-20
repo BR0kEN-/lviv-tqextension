@@ -1,4 +1,14 @@
 ---
+- name: Create directory for reports
+  sudo: yes
+  file:
+    path: "{{ build_reports_dir }}"
+    mode: 0755
+    state: "{{ item }}"
+  with_items:
+    - absent
+    - directory
+
 - name: Check for VBox network
   shell: ifconfig | grep -Eo '(vboxnet\d+)' | awk 'END{print}' | awk '{print $1}'
   register: vbox_network
@@ -15,7 +25,7 @@
 
 - name: Install Composer packages
   sudo: yes
-  shell: "cd /var/www && composer install"
+  shell: "cd {{ sync_root }} && composer install"
 
 - name: Create directory for Selenium
   file:

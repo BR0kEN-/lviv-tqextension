@@ -1,7 +1,8 @@
 default:
-#  formatters:
-#    html:
-#      output_path: {{ build_reports_dir }}/behat
+  formatters:
+    pretty: true
+    html:
+      output_path: {{ build_reports_dir }}/behat
   suites:
     default:
       contexts:

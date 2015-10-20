@@ -20,23 +20,15 @@
       delegate_to: localhost
       register: selenium_pid
 
+    - include: tasks/tests.kill-selenium.yml
+
     - name: Register variable with reports URL
       set_fact:
         reports_url: "{{ site_url }}/{{ build_reports_dir | basename }}"
 
-    - name: Create directory for reports
-      sudo: yes
-      file:
-        path: "{{ build_reports_dir }}"
-        mode: 0755
-        state: "{{ item }}"
-      with_items:
-        - absent
-        - directory
-
   tasks:
     - include: tasks/tests.init.yml
-      when: selenium_pid.stdout == ""
+      when: kill_selenium or selenium_pid.stdout == ""
 
     - name: Run tests
       sudo: yes
@@ -47,8 +39,4 @@
       shell: 'if [ -s {{ build_reports_dir }}/behat/index.html ]; then echo "<a href=\"{{ reports_url }}/behat/index.html\" target=\"_blank\">Behat report</a>" >> {{ artifacts_file }}; fi'
 
   post_tasks:
-    - name: Kill Selenium Hub
-      # All nodes will be killed automatically.
-      shell: "kill {{ selenium_pid.stdout }}"
-      delegate_to: localhost
-      when: kill_selenium and selenium_pid.stdout != ""
+    - include: tasks/tests.kill-selenium.yml

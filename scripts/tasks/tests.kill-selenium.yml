@@ -1,0 +1,6 @@
+---
+- name: Kill Selenium
+  # All nodes will be killed automatically.
+  shell: "kill {{ selenium_pid.stdout }}"
+  delegate_to: localhost
+  when: kill_selenium and selenium_pid.stdout != ""
