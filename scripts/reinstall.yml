@@ -108,9 +108,10 @@
         recurse: yes
 
     - name: Remove settings.php
-      file:
-        name: "{{ docroot }}/sites/default/settings.php"
-        state: absent
+      shell: "rm {{ docroot }}/sites/default/settings.php"
+#      file:
+#        name: "{{ docroot }}/sites/default/settings.php"
+#        state: absent
 
     - name: Installing Drupal
       shell: "cd {{ docroot }} && drush -y si {{ installation_profile_name }} --db-url=mysql://{{ mysql.user }}:{{ mysql.pass }}@127.0.0.1:/{{ databases.default }} --account-name={{ drupal.user }} --account-pass={{ drupal.pass }} --uri={{ site_url }}"
@@ -123,16 +124,8 @@
         mode: 0755
         state: directory
 
-    - name: Remove settings.php
-      file:
-        name: "{{ docroot }}/sites/default/settings.php"
-        state: absent
-
     - name: Creating settings.php
       shell: "cd {{ docroot }} && cp sites/default/default.settings.php sites/default/settings.php"
-
-    - include: tasks/reinstall.windows.yml
-      when: is_windows
 
     - name: Adding base_url variable to settings.php
       lineinfile:
@@ -147,13 +140,11 @@
         mode: 0644
       with_dict: databases
       delegate_to: localhost
-      when: is_windows == false
 
     - name: Write databases config into settings.php
       lineinfile:
         dest: "{{ docroot }}/sites/default/settings.php"
         line: "{{ lookup('file', 'databases.settings.php') }}"
-      when: is_windows == false
 
     - name: Remove temporary file with generated settings for databases
       sudo: no
@@ -161,37 +152,35 @@
         path: databases.settings.php
         state: absent
       delegate_to: localhost
-      when: is_windows == false
 
-    - name: Random prefix for memcache to settings.php
-      lineinfile:
-        dest: "{{ docroot }}/sites/default/settings.php"
-        line: "$conf['memcache_key_prefix'] = '{{ pp_environment }}';"
-      when: pp_environment == "CHANGE_ME" and is_windows == false
-
-    - name: Memcache settings to settings.php
-      lineinfile:
-        dest: "{{ docroot }}/sites/default/settings.php"
-        line: "$conf['cache_backends'][] = 'sites/all/modules/contrib/memcache/memcache.inc';"
-      when: pp_environment == "CHANGE_ME" and is_windows == false
-
-    - name: Memcache settings to settings.php
-      lineinfile:
-        dest: "{{ docroot }}/sites/default/settings.php"
-        line: "$conf['cache_default_class'] = 'MemCacheDrupal';"
-      when: pp_environment == "CHANGE_ME" and is_windows == false
+#    - name: Random prefix for memcache to settings.php
+#      lineinfile:
+#        dest: "{{ docroot }}/sites/default/settings.php"
+#        line: "$conf['memcache_key_prefix'] = '{{ pp_environment }}';"
+#      when: pp_environment == "CHANGE_ME"
+#
+#    - name: Memcache settings to settings.php
+#      lineinfile:
+#        dest: "{{ docroot }}/sites/default/settings.php"
+#        line: "$conf['cache_backends'][] = 'sites/all/modules/contrib/memcache/memcache.inc';"
+#      when: pp_environment == "CHANGE_ME"
+#
+#    - name: Memcache settings to settings.php
+#      lineinfile:
+#        dest: "{{ docroot }}/sites/default/settings.php"
+#        line: "$conf['cache_default_class'] = 'MemCacheDrupal';"
+#      when: pp_environment == "CHANGE_ME"
 
     - name: Adding environment variable to settings.php
       lineinfile:
         dest: "{{ docroot }}/sites/default/settings.php"
         line: "$conf['pp_environment'] = '{{ pp_environment }}';"
-      when: is_windows == false
 
     - name: Stage File Proxy settings
       lineinfile:
         dest: "{{ docroot }}/sites/default/settings.php"
         line: "$conf['stage_file_proxy_origin'] = '{{ origin_site_url }}';"
-      when: (pp_environment == "demo" or pp_environment == "default") and is_windows == false
+      when: pp_environment == "demo" or pp_environment == "default"
 
     - name: Check if registry_rebuild is installed
       shell: "cd {{ docroot }} && drush | grep -c registry_rebuild"
